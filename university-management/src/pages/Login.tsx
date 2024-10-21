@@ -1,9 +1,11 @@
-import { useForm } from "react-hook-form";
+import { FieldValues, useForm } from "react-hook-form";
 import { useLoginMutation } from "../redux/features/auth/authApi";
 import { TokenVerify } from "../utils/TokenVerify";
 import { useAppDispatch } from "../redux/hooks";
-import { setUser } from "../redux/features/auth/authSlice";
-// import { TokenVerify } from "../utils/TokenVerify";
+import { setUser, TUser } from "../redux/features/auth/authSlice";
+import { useNavigate } from "react-router-dom";
+import { Spin } from "antd";
+import { toast, Toaster } from "sonner";
 
 const Login = () => {
   const {
@@ -11,16 +13,21 @@ const Login = () => {
     handleSubmit,
     formState: { errors },
   } = useForm();
+  const navigate = useNavigate();
+  const [login, { isLoading, error }] = useLoginMutation();
+  const dispatch = useAppDispatch();
 
-  const [login, { data }] = useLoginMutation();
-  const dispatch = useAppDispatch()
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: FieldValues) => {
     const res = await login(data).unwrap();
-    const token = TokenVerify(res.data.accessToken);
-    dispatch(setUser({user: token, token: res.data.accessToken}))
+    const token = TokenVerify(res.data.accessToken) as TUser;
+    dispatch(setUser({ user: token, token: res.data.accessToken }));
+    toast.success(`You have successfully logged in! Welcome back!`);
+    navigate("/admin/dashboard");
   };
 
-  // console.log(data)
+  if (error) {
+    toast.warning(`${error?.data?.message}`);
+  }
 
   return (
     <div
@@ -99,16 +106,16 @@ const Login = () => {
               style={{
                 width: "100%",
                 padding: "10px",
-                backgroundColor: "#1890ff",
-                color: "#fff",
+                backgroundColor: "fff",
                 border: "none",
                 borderRadius: "4px",
                 cursor: "pointer",
               }}
             >
-              Login
+              {isLoading ? <Spin /> : "Login"}
             </button>
           </div>
+          <Toaster richColors position="top-right" />
         </form>
       </div>
     </div>
